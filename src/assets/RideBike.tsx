@@ -19,8 +19,8 @@ const RideBike = (props: CssProps) => {
   return (
     <StyledRideBike {...props}>
       <svg
-        width="1058"
-        height="785"
+        width="952"
+        height="706"
         viewBox="0 0 1058 785"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

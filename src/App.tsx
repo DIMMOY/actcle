@@ -4,9 +4,10 @@ import RideBike from "./assets/RideBike";
 import styled from "@emotion/styled";
 import { keyframes } from "@emotion/react";
 import { speedToDuration } from "./utils";
-import { Input } from "../node_modules/@chakra-ui/input";
-import Propposition from "./assets/proposition.png";
+import { Input, InputGroup, InputLeftAddon } from "@chakra-ui/input";
+import dynamic from "./assets/dynamic.png";
 import Static from "./assets/static.png";
+import { Text } from "@chakra-ui/layout";
 
 function App() {
   const [speed, setSpeed] = useState(800);
@@ -21,93 +22,119 @@ function App() {
 
   const resultBackWheel =
     ((distanceGY + distanceHG) * weightHuman + distanceGY * weightBike) /
-    (distanceGY + distanceHG + distanceXH);
+      (distanceGY + distanceHG + distanceXH) || 0;
   const resultFrontWheel =
     (distanceXH * weightHuman + (distanceXH + distanceHG) * weightBike) /
-    (distanceGY + distanceHG + distanceXH);
+      (distanceGY + distanceHG + distanceXH) || 0;
 
-  console.log(1 / speedToDuration(velocityA, radius));
+  const VB = velocityA + (velocityA / radius) * radius || 0;
+  const VE =
+    Math.sqrt(
+      Math.pow(velocityA * Math.sin((angle * Math.PI) / 180), 2) +
+        Math.pow(velocityA + velocityA * Math.cos((angle * Math.PI) / 180), 2)
+    ) || 0;
+
   return (
     <div className="App" style={{ display: "flex" }}>
-      <div>
+      <div style={{ width: "50%", margin: "auto 0" }}>
         <RideBike duration={speedToDuration(velocityA, radius)} />
       </div>
 
-      <div>
-        <p>Static</p>
-        <Input
-          placeholder="น้ำหนักของคนขี่จักรยาน (จุด H หน่วยเป็นกิโลกรัม)"
-          type="number"
-          onChange={(e) => setWeightHuman(parseFloat(e.target.value))}
-        />
-        <Input
-          placeholder="น้ำหนักของจักรยาน (จุด G หน่วยเป็นกิโลกรัม)"
-          type="number"
-          onChange={(e) => setWeightBike(parseFloat(e.target.value))}
-        />
-        <Input
-          placeholder="ระยะห่างระหว่างคนกับล้อหลัง (จุด X - จุด H หน่วยเป็นเซนติเมตร)"
-          type="number"
-          onChange={(e) => setDistanceXH(parseFloat(e.target.value))}
-        />
-        <Input
-          placeholder="ระยะห่างระหว่างน้ำหนักคนกับน้ำหนักจักรยาน (จุด H - จุด G หน่วยเป็นเซนติเมตร)"
-          type="number"
-          onChange={(e) => setDistanceHG(parseFloat(e.target.value))}
-        />
-        <Input
-          placeholder="ระยะห่างระหว่างน้ำหนักจักรยานกับล้อหน้า (จุด G - จุด Y หน่วยเป็นเซนติเมตร)"
-          type="number"
-          onChange={(e) => setDistanceGY(parseFloat(e.target.value))}
-        />
+      <div style={{ width: "50%", margin: "auto 0", paddingRight: "50px" }}>
+        <Text textAlign="left" fontSize="xl" fontWeight={700} marginBottom={5}>
+          Static
+        </Text>
+        <InputGroup>
+          <InputLeftAddon children="H (kg)" width={100} />
+          <Input
+            placeholder="น้ำหนักของคนขี่จักรยาน (จุด H หน่วยเป็นกิโลกรัม)"
+            type="number"
+            onChange={(e) => setWeightHuman(parseFloat(e.target.value))}
+          />
+        </InputGroup>
+        <InputGroup>
+          <InputLeftAddon children="G (kg)" width={100} />
+          <Input
+            placeholder="น้ำหนักของจักรยาน (จุด G หน่วยเป็นกิโลกรัม)"
+            type="number"
+            onChange={(e) => setWeightBike(parseFloat(e.target.value))}
+          />
+        </InputGroup>
+        <InputGroup>
+          <InputLeftAddon children="XH (cm)" width={100} />
+          <Input
+            placeholder="ระยะห่างระหว่างคนกับล้อหลัง (จุด X - จุด H หน่วยเป็นเซนติเมตร)"
+            type="number"
+            onChange={(e) => setDistanceXH(parseFloat(e.target.value))}
+          />
+        </InputGroup>
+        <InputGroup>
+          <InputLeftAddon children="HG (cm)" width={100} />
+          <Input
+            placeholder="ระยะห่างระหว่างน้ำหนักคนกับน้ำหนักจักรยาน (จุด H - จุด G หน่วยเป็นเซนติเมตร)"
+            type="number"
+            onChange={(e) => setDistanceHG(parseFloat(e.target.value))}
+          />
+        </InputGroup>
+        <InputGroup>
+          <InputLeftAddon children="GY (cm)" width={100} />
+          <Input
+            placeholder="ระยะห่างระหว่างน้ำหนักจักรยานกับล้อหน้า (จุด G - จุด Y หน่วยเป็นเซนติเมตร)"
+            type="number"
+            onChange={(e) => setDistanceGY(parseFloat(e.target.value))}
+          />
+        </InputGroup>
+
         <div style={{ display: "flex" }}>
-          <img src={Static} width="450"></img>
-          <div>
-            <p>
+          <img src={Static} width="400" alt="static" />
+          <div style={{ margin: "auto 0" }}>
+            <Text fontSize="xl" textAlign="right">
               แรงที่ล้อหลัง = {(resultBackWheel * 9.81).toFixed(2)} N /{" "}
               {resultBackWheel} kg
-            </p>
-            <p>
+            </Text>
+            <Text fontSize="xl" textAlign="right">
               แรงที่ล้อหน้า = {(resultFrontWheel * 9.81).toFixed(2)} N /{" "}
               {resultFrontWheel} kg
-            </p>
+            </Text>
           </div>
         </div>
 
-        <p>Dynamic</p>
-        <Input
-          placeholder="ความเร็วที่จุด A (เมตรต่อวินาที)"
-          type="number"
-          onChange={(e) => setVelocityA(parseFloat(e.target.value))}
-        />
-        <Input
-          placeholder="รัศมีของล้อ (เซนติเมตร)"
-          type="number"
-          onChange={(e) => setRadius(parseFloat(e.target.value))}
-        />
-        <Input
-          placeholder="มุมระหว่างจุด B และ E (B เป็นจุดคงที่)"
-          type="number"
-          onChange={(e) => setAngle(parseFloat(e.target.value))}
-        />
+        <Text textAlign="left" fontSize="xl" fontWeight={700} marginBottom={5}>
+          Dynamic
+        </Text>
+        <InputGroup>
+          <InputLeftAddon children="VA (m/s)" width={100} />
+          <Input
+            placeholder="ความเร็วที่จุด A (เมตรต่อวินาที)"
+            type="number"
+            onChange={(e) => setVelocityA(parseFloat(e.target.value))}
+          />
+        </InputGroup>
+        <InputGroup>
+          <InputLeftAddon children="R (cm)" width={100} />
+          <Input
+            placeholder="รัศมีของล้อ (เซนติเมตร)"
+            type="number"
+            onChange={(e) => setRadius(parseFloat(e.target.value))}
+          />
+        </InputGroup>
+        <InputGroup>
+          <InputLeftAddon children="θ BE" width={100} />
+          <Input
+            placeholder="มุมระหว่างจุด B และ E (B เป็นจุดคงที่)"
+            type="number"
+            onChange={(e) => setAngle(parseFloat(e.target.value))}
+          />
+        </InputGroup>
         <div style={{ display: "flex" }}>
-          <img src={Propposition} width="450"></img>
-          <div>
-            <p>
-              ความเร็วที่จุด B (จุดบนสุดของล้อ) ={" "}
-              {(velocityA + (velocityA / radius) * radius).toFixed(2)} m/s
-            </p>
-            <p>
-              ความเร็วที่จุด E ={" "}
-              {Math.sqrt(
-                Math.pow(velocityA * Math.sin((angle * Math.PI) / 180), 2) +
-                  Math.pow(
-                    velocityA + velocityA * Math.cos((angle * Math.PI) / 180),
-                    2
-                  )
-              ).toFixed(2)}{" "}
-              m/s
-            </p>
+          <img src={dynamic} width="400" alt="" />
+          <div style={{ margin: "auto 0" }}>
+            <Text fontSize="xl" textAlign="right">
+              ความเร็วที่จุด B (จุดบนสุดของล้อ) = {VB.toFixed(2)} m/s
+            </Text>
+            <Text fontSize="xl" textAlign="right">
+              ความเร็วที่จุด E = {VE.toFixed(2)} m/s
+            </Text>
           </div>
         </div>
       </div>
