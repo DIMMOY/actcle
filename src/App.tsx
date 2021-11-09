@@ -7,6 +7,8 @@ import { speedToDuration } from "./utils";
 import { Input, InputGroup, InputLeftAddon } from "@chakra-ui/input";
 import dynamic from "./assets/dynamic.png";
 import Static from "./assets/static.png";
+import staticWheel from "./assets/staticWheel.png";
+import dynamicWheel from "./assets/dynamicWheel.png";
 import { Text } from "@chakra-ui/layout";
 import { Button } from "../node_modules/@chakra-ui/button";
 import { Heading } from "../node_modules/@chakra-ui/react";
@@ -23,31 +25,41 @@ import {
 
 function App() {
   const [speed, setSpeed] = useState(800);
-  const [velocityA, setVelocityA] = useState<number>(0);
-  const [radius, setRadius] = useState<number>(0);
-  const [weightHuman, setWeightHuman] = useState<number>(0);
-  const [weightBike, setWeightBike] = useState<number>(0);
-  const [distanceHG, setDistanceHG] = useState<number>(0);
-  const [distanceGY, setDistanceGY] = useState<number>(0);
-  const [distanceXH, setDistanceXH] = useState<number>(0);
-  const [angle, setAngle] = useState<number>(0);
+  const [velocityA, setVelocityA] = useState<number>();
+  const [radius, setRadius] = useState<number>();
+  const [weightHuman, setWeightHuman] = useState<number>();
+  const [weightBike, setWeightBike] = useState<number>();
+  const [distanceHG, setDistanceHG] = useState<number>();
+  const [distanceGY, setDistanceGY] = useState<number>();
+  const [distanceXH, setDistanceXH] = useState<number>();
+  const [angle, setAngle] = useState<number>();
 
-  const resultBackWheel =
-    ((distanceGY + distanceHG) * weightHuman + distanceGY * weightBike) /
-      (distanceGY + distanceHG + distanceXH) || 0;
-  const resultFrontWheel =
-    (distanceXH * weightHuman + (distanceXH + distanceHG) * weightBike) /
-      (distanceGY + distanceHG + distanceXH) || 0;
   const showResultStatic =
-    distanceGY && distanceHG && weightHuman && distanceGY && weightBike;
+    distanceXH != null &&
+    distanceHG != null &&
+    weightHuman != null &&
+    distanceGY != null &&
+    weightBike != null;
+  const showResultDynamic =
+    velocityA != null && radius != null && angle != null;
+  const resultBackWheel = showResultStatic
+    ? ((distanceGY + distanceHG) * weightHuman + distanceGY * weightBike) /
+        (distanceGY + distanceHG + distanceXH) || 0
+    : 0;
+  const resultFrontWheel = showResultStatic
+    ? (distanceXH * weightHuman + (distanceXH + distanceHG) * weightBike) /
+        (distanceGY + distanceHG + distanceXH) || 0
+    : 0;
 
-  const VB = velocityA + (velocityA / radius) * radius || 0;
-  const VE =
-    Math.sqrt(
-      Math.pow(velocityA * Math.sin((angle * Math.PI) / 180), 2) +
-        Math.pow(velocityA + velocityA * Math.cos((angle * Math.PI) / 180), 2)
-    ) || 0;
-  const showResultDynamic = velocityA && radius && angle;
+  const VB = showResultDynamic
+    ? velocityA + (velocityA / radius) * radius || 0
+    : 0;
+  const VE = showResultDynamic
+    ? Math.sqrt(
+        Math.pow(velocityA * Math.sin((angle * Math.PI) / 180), 2) +
+          Math.pow(velocityA + velocityA * Math.cos((angle * Math.PI) / 180), 2)
+      ) || 0
+    : 0;
 
   const [isOpenStatic, setIsOpenStatic] = useState<boolean>(false);
   const [isOpenDynamic, setIsOpenDynamic] = useState<boolean>(false);
@@ -55,12 +67,17 @@ function App() {
   return (
     <div className="App" style={{ display: "flex" }}>
       <div style={{ width: "50%", margin: "auto 0" }}>
-        <RideBike duration={speedToDuration(velocityA, radius)} />
+        <RideBike
+          duration={speedToDuration(
+            velocityA != null ? velocityA : 0,
+            radius != null ? radius : 0
+          )}
+        />
       </div>
 
       <div style={{ width: "50%", margin: "auto 0", paddingRight: "50px" }}>
         <Text textAlign="left" fontSize="xl" fontWeight={700} marginBottom={5}>
-          Static
+          Static (Equivalent system of force)
         </Text>
         <InputGroup>
           <InputLeftAddon children="H (kg)" width={100} />
@@ -113,7 +130,7 @@ function App() {
                 ? Math.abs(resultFrontWheel * 9.81).toFixed(2)
                 : 0}{" "}
               N = {showResultStatic ? Math.abs(resultFrontWheel).toFixed(2) : 0}{" "}
-              kg
+              kg ทิศ{resultFrontWheel >= 0 ? "ขึ้น" : "ลง"}
             </Text>
             <Text fontSize="xl" textAlign="right">
               แรงที่ล้อหลัง ={" "}
@@ -121,7 +138,7 @@ function App() {
                 ? Math.abs(resultBackWheel * 9.81).toFixed(2)
                 : 0}{" "}
               N = {showResultStatic ? Math.abs(resultBackWheel).toFixed(2) : 0}{" "}
-              kg
+              kg ทิศ{resultBackWheel >= 0 ? "ขึ้น" : "ลง"}
             </Text>
             <Button
               onClick={() => setIsOpenStatic(true)}
@@ -137,7 +154,7 @@ function App() {
         </div>
 
         <Text textAlign="left" fontSize="xl" fontWeight={700} marginBottom={5}>
-          Dynamic
+          Dynamic (Relative velocity)
         </Text>
         <InputGroup>
           <InputLeftAddon children="VA (m/s)" width={100} />
@@ -189,75 +206,91 @@ function App() {
         </div>
 
         <Modal
-          isOpen={isOpenStatic}
+          isOpen={isOpenStatic && showResultStatic}
           onClose={() => setIsOpenStatic(false)}
           size="xl"
         >
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>วิธีคิด Static</ModalHeader>
+            <ModalHeader>
+              วิธีคิด Static (Equivalent system of force)
+            </ModalHeader>
             <ModalCloseButton />
-            <ModalBody>
-              <div style={{ marginBottom: "20px" }}>
-                <Text fontSize="md">โมเมนต์ที่ล้อหลัง (X) = 0</Text>
-                <Text fontSize="md">
-                  (XH * Mass[H]) + ((XH + HG) * Mass[G]) + ((XH + HG + GY) *
-                  Mass[Y]) = 0
-                </Text>
-                <Text fontSize="md">
-                  ({distanceXH} * {-weightHuman}) + (({distanceXH} +{" "}
-                  {distanceHG}) * {-weightBike}) + (({distanceXH} + {distanceHG}{" "}
-                  + {distanceGY}) * Mass[Y]) = 0
-                </Text>
-                <Text fontSize="md">
-                  {distanceXH * -weightHuman} +{" "}
-                  {(distanceXH + distanceHG) * -weightBike} + (
-                  {distanceXH + distanceHG + distanceGY} * Mass[Y]) = 0
-                </Text>
-                <Text fontSize="md">
-                  Mass[Y] = ({distanceXH * weightHuman} +{" "}
-                  {(distanceXH + distanceHG) * weightBike}) /{" "}
-                  {distanceXH + distanceHG + distanceGY} ={" "}
-                  {resultFrontWheel.toFixed(2)} kg ={" "}
-                  {(resultFrontWheel * 9.81).toFixed(2)} N
-                </Text>
-                <Heading fontSize="md">
-                  ดังนั้น Mass[Y] หรือแรงที่ล้อหน้า ={" "}
-                  {Math.abs(resultFrontWheel * 9.81).toFixed(2)} N หรือ{" "}
-                  {Math.abs(resultFrontWheel).toFixed(2)} kg
-                </Heading>
-              </div>
+            {showResultStatic && (
+              <ModalBody>
+                <div style={{ marginBottom: "20px" }}>
+                  <img
+                    src={staticWheel}
+                    width="500"
+                    style={{
+                      margin: "auto",
+                      marginBottom: "20px",
+                      display: "block",
+                    }}
+                  />
+                  <Text fontSize="md">
+                    กำหนดทิศของแรงโดยทิศลงเป็นลบ (-) ทิศขึ้นเป็นบวก (+)
+                  </Text>
+                  <Text fontSize="md">โมเมนต์ที่ล้อหลัง (X) ΣM(X) = 0 </Text>
+                  <Text fontSize="md">
+                    (XH * Mass[H]) + ((XH + HG) * Mass[G]) + ((XH + HG + GY) *
+                    Mass[Y]) = 0
+                  </Text>
+                  <Text fontSize="md">
+                    ({distanceXH} * {-weightHuman}) + (({distanceXH} +{" "}
+                    {distanceHG}) * {-weightBike}) + (({distanceXH} +{" "}
+                    {distanceHG} + {distanceGY}) * Mass[Y]) = 0
+                  </Text>
+                  <Text fontSize="md">
+                    {distanceXH * -weightHuman} +{" "}
+                    {(distanceXH + distanceHG) * -weightBike} + (
+                    {distanceXH + distanceHG + distanceGY} * Mass[Y]) = 0
+                  </Text>
+                  <Text fontSize="md">
+                    Mass[Y] = ({distanceXH * weightHuman} +{" "}
+                    {(distanceXH + distanceHG) * weightBike}) /{" "}
+                    {distanceXH + distanceHG + distanceGY} ={" "}
+                    {resultFrontWheel.toFixed(2)} kg ={" "}
+                    {(resultFrontWheel * 9.81).toFixed(2)} N
+                  </Text>
+                  <Heading fontSize="md">
+                    ดังนั้น Mass[Y] หรือแรงที่ล้อหน้า ={" "}
+                    {Math.abs(resultFrontWheel * 9.81).toFixed(2)} N หรือ{" "}
+                    {Math.abs(resultFrontWheel).toFixed(2)} kg
+                  </Heading>
+                </div>
 
-              <div>
-                <Text fontSize="md">โมเมนต์ที่ล้อหน้า (Y) = 0</Text>
-                <Text fontSize="md">
-                  (GY * Mass[G]) + ((GY + HG) * Mass[H]) + ((GY + HG + XH) *
-                  Mass[X]) = 0
-                </Text>
-                <Text fontSize="md">
-                  ({distanceGY} * {-weightBike}) + (({distanceGY} + {distanceHG}
-                  ) * {-weightHuman}) + (({distanceGY} + {distanceHG} +{" "}
-                  {distanceXH}) * Mass[X]) = 0
-                </Text>
-                <Text fontSize="md">
-                  {distanceGY * -weightBike} +{" "}
-                  {(distanceGY + distanceHG) * -weightHuman} + (
-                  {distanceGY + distanceHG + distanceXH} * Mass[X]) = 0
-                </Text>
-                <Text fontSize="md">
-                  Mass[Y] = ({distanceGY * weightBike} +{" "}
-                  {(distanceGY + distanceHG) * weightHuman}) /{" "}
-                  {distanceGY + distanceHG + distanceXH} ={" "}
-                  {resultBackWheel.toFixed(2)} kg ={" "}
-                  {(resultBackWheel * 9.81).toFixed(2)} N
-                </Text>
-                <Heading fontSize="md">
-                  ดังนั้น Mass[X] หรือแรงที่ล้อหลัง ={" "}
-                  {Math.abs(resultBackWheel * 9.81).toFixed(2)} N หรือ{" "}
-                  {Math.abs(resultBackWheel).toFixed(2)} kg
-                </Heading>
-              </div>
-            </ModalBody>
+                <div>
+                  <Text fontSize="md">โมเมนต์ที่ล้อหน้า (Y) : ΣM(Y) = 0</Text>
+                  <Text fontSize="md">
+                    (GY * Mass[G]) + ((GY + HG) * Mass[H]) + ((GY + HG + XH) *
+                    Mass[X]) = 0
+                  </Text>
+                  <Text fontSize="md">
+                    ({distanceGY} * {-weightBike}) + (({distanceGY} +{" "}
+                    {distanceHG}) * {-weightHuman}) + (({distanceGY} +{" "}
+                    {distanceHG} + {distanceXH}) * Mass[X]) = 0
+                  </Text>
+                  <Text fontSize="md">
+                    {distanceGY * -weightBike} +{" "}
+                    {(distanceGY + distanceHG) * -weightHuman} + (
+                    {distanceGY + distanceHG + distanceXH} * Mass[X]) = 0
+                  </Text>
+                  <Text fontSize="md">
+                    Mass[X] = ({distanceGY * weightBike} +{" "}
+                    {(distanceGY + distanceHG) * weightHuman}) /{" "}
+                    {distanceGY + distanceHG + distanceXH} ={" "}
+                    {resultBackWheel.toFixed(2)} kg ={" "}
+                    {(resultBackWheel * 9.81).toFixed(2)} N
+                  </Text>
+                  <Heading fontSize="md">
+                    ดังนั้น Mass[X] หรือแรงที่ล้อหลัง ={" "}
+                    {Math.abs(resultBackWheel * 9.81).toFixed(2)} N หรือ{" "}
+                    {Math.abs(resultBackWheel).toFixed(2)} kg
+                  </Heading>
+                </div>
+              </ModalBody>
+            )}
             <ModalFooter>
               <Button variant="ghost" onClick={() => setIsOpenStatic(false)}>
                 Close
@@ -267,63 +300,75 @@ function App() {
         </Modal>
 
         <Modal
-          isOpen={isOpenDynamic}
+          isOpen={isOpenDynamic && showResultDynamic}
           onClose={() => setIsOpenDynamic(false)}
           size="xl"
         >
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>วิธีคิด Dynamic</ModalHeader>
+            <ModalHeader>วิธีคิด Dynamic (Relative velocity)</ModalHeader>
             <ModalCloseButton />
-            <ModalBody>
-              <div style={{ marginBottom: "20px" }}>
-                <Text fontSize="md">
-                  ω(A) = VA / R = {velocityA} / {radius * 0.01} ={" "}
-                  {(velocityA / radius / 0.01).toFixed(2)} rad / s
-                </Text>
-                <Text fontSize="md">
-                  V(B/A) = V(E/A) = ω(A) * R ={" "}
-                  {(velocityA / radius / 0.01).toFixed(2)} * {radius * 0.01} ={" "}
-                  {velocityA.toFixed(2)} m/s
-                </Text>
-              </div>
+            {showResultDynamic && (
+              <ModalBody>
+                <img
+                  src={dynamicWheel}
+                  width="280"
+                  style={{
+                    margin: "auto",
+                    marginBottom: "20px",
+                    display: "block",
+                  }}
+                />
+                <div style={{ marginBottom: "20px" }}>
+                  <Text fontSize="md">
+                    ω(A) = VA / R = {velocityA} / {radius * 0.01} ={" "}
+                    {(velocityA / radius / 0.01).toFixed(2)} rad / s
+                  </Text>
+                  <Text fontSize="md">
+                    V(B/A) = V(E/A) = ω(A) * R ={" "}
+                    {(velocityA / radius / 0.01).toFixed(2)} * {radius * 0.01} ={" "}
+                    {velocityA.toFixed(2)} m/s
+                  </Text>
+                </div>
 
-              <div style={{ marginBottom: "20px" }}>
-                <Text fontSize="md">
-                  V(B) = V(B/A) + V(A) = V(B/A) * (cos(0)i + sin(0)j) + V(A) * i
-                </Text>
-                <Text fontSize="md">
-                  V(B) = (V(B/A) + V(A))i = ({velocityA.toFixed(2)} +{" "}
-                  {velocityA.toFixed(2)})i = {(velocityA * 2).toFixed(2)}i m/s ={" "}
-                  {(velocityA * 2).toFixed(2)} m/s
-                </Text>
-                <Heading fontSize="md">
-                  ดังนั้น ความเร็วที่จุด B = {(velocityA * 2).toFixed(2)}i m/s
-                  หรือ {(velocityA * 2).toFixed(2)} m/s
-                </Heading>
-              </div>
+                <div style={{ marginBottom: "20px" }}>
+                  <Text fontSize="md">
+                    V(B) = V(B/A) + V(A) = V(B/A) * (cos(0)i + sin(0)j) + V(A) *
+                    i
+                  </Text>
+                  <Text fontSize="md">
+                    V(B) = (V(B/A) + V(A))i = ({velocityA.toFixed(2)} +{" "}
+                    {velocityA.toFixed(2)})i = {(velocityA * 2).toFixed(2)}i m/s
+                    = {(velocityA * 2).toFixed(2)} m/s
+                  </Text>
+                  <Heading fontSize="md">
+                    ดังนั้น ความเร็วที่จุด B = {(velocityA * 2).toFixed(2)}i m/s
+                    หรือ {(velocityA * 2).toFixed(2)} m/s
+                  </Heading>
+                </div>
 
-              <div>
-                <Text fontSize="md">
-                  V(E) = V(E/A) + V(A) = V(E/A) * (cos(θ)i + sin(θ)j) + V(A) * i
-                  โดย θ BE = {angle}
-                </Text>
-                <Text fontSize="md">
-                  V(E) = {velocityA.toFixed(2)}(cos({angle})i + sin({angle})j) +{" "}
-                  {velocityA.toFixed(2)}i
-                </Text>
-                <Heading fontSize="md">
-                  ดังนั้น ความเร็วที่จุด E ={" "}
-                  {(
-                    velocityA +
-                    velocityA * Math.cos((angle * Math.PI) / 180)
-                  ).toFixed(2)}
-                  i +{" "}
-                  {(velocityA * Math.sin((angle * Math.PI) / 180)).toFixed(2)}j
-                  m/s หรือ {VE.toFixed(2)} m/s
-                </Heading>
-              </div>
-            </ModalBody>
+                <div>
+                  <Text fontSize="md">
+                    V(E) = V(E/A) + V(A) = V(E/A) * (cos(θ)i + sin(θ)j) + V(A) *
+                    i โดย θ BE = {angle}
+                  </Text>
+                  <Text fontSize="md">
+                    V(E) = {velocityA.toFixed(2)}(cos({angle})i + sin({angle})j)
+                    + {velocityA.toFixed(2)}i
+                  </Text>
+                  <Heading fontSize="md">
+                    ดังนั้น ความเร็วที่จุด E ={" "}
+                    {(
+                      velocityA +
+                      velocityA * Math.cos((angle * Math.PI) / 180)
+                    ).toFixed(2)}
+                    i +{" "}
+                    {(velocityA * Math.sin((angle * Math.PI) / 180)).toFixed(2)}
+                    j m/s หรือ {VE.toFixed(2)} m/s
+                  </Heading>
+                </div>
+              </ModalBody>
+            )}
             <ModalFooter>
               <Button variant="ghost" onClick={() => setIsOpenDynamic(false)}>
                 Close
